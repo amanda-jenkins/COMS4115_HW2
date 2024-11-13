@@ -43,6 +43,13 @@ id -> A | B | C | D | E
 number -> int 
 
 
+**How to run the code**
+chmod +x run_scanner.sh
+./run_scanner.sh example.txt > tokens.txt
+python3 parser_1.py
+
+
+
 
 
 
