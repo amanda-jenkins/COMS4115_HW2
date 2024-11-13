@@ -22,6 +22,25 @@
 
 **Production Rules:**
 
+program -> statements 
+
+statements -> statement statements | ε
+
+statement -> matrix_assignment | maxtrix_mult_assignment | display_statement 
+
+matrix_assignment -> id = matrix
+
+Matrix -> matrix_row
+
+Matrix_row -> (number, number) matrix_row| ε
+
+maxtrix_mult_assignment -> id = id x id 
+
+display_statement -> display id 
+
+id -> A | B | C | D | E 
+
+number -> int 
 
 
 
