@@ -1,146 +1,155 @@
-class Token:
-    def __init__(self, type, value):
-        self.type = type 
+def read_tokens_from_file(filename):
+    tokens = []
+    with open(filename, 'r') as f:
+        for line in f:
+            parts = line.strip().split()
+            if len(parts) == 2:
+                tokens.append((parts[0], parts[1]))
+            elif len(parts) == 1:
+                tokens.append((parts[0], None))
+    return tokens
+
+# this reads the tokens from tokens.txt
+tokens = read_tokens_from_file("tokens.txt")
+
+class Node:
+    def __init__(self, type, value=None):
+        self.type = type
         self.value = value
+        self.children = []
 
-    def __repr__(self):
-        return "{}({})".format(self.type, self.value)
+    def add_child(self, child):
+        self.children.append(child)
 
-
-
-class ProgramNode:
-    def __init__(self, statements):
-        self.statements = statements
-
-    def __str__(self, level=0):
-        result = "  " * level + "PROGRAM\n"
-        for stmt in self.statements:
-            result += stmt.__str__(level + 1)
-        return result
+    def __repr__(self, level=0):
+        ret = "\t" * level + repr(self.type)
+        if self.value:
+            ret += f" ({self.value})"
+        ret += "\n"
+        for child in self.children:
+            ret += child.__repr__(level + 1)
+        return ret
 
 
-class AssignmentNode:
-    def __init__(self, identifier, value):
-        self.identifier = identifier
-        self.value = value
-
-    def __str__(self, level=0):
-        result = "  " * level + "MATRIX_ASSIGNMENT\n"
-        result += "  " * (level + 1) + "IDENTIFIER({})\n".format(self.identifier.value)
-        result += self.value.__str__(level + 1)
-        return result
-
-
-class DisplayNode:
-    def __init__(self, identifier):
-        self.identifier = identifier
-
-    def __str__(self, level=0):
-        result = "  " * level + "DISPLAY_STATEMENT\n"
-        result += "  " * (level + 1) + "IDENTIFIER({})\n".format(self.identifier.value)
-        return result
-
-
-class MatrixNode:
-    def __init__(self, rows):
-        self.rows = rows
-
-    def __str__(self, level=0):
-        result = "  " * level + "MATRIX_LIST\n"
-        for row in self.rows:
-            result += "  " * (level + 1) + "MATRIX({})\n".format(row)
-        return result
-
-
-class ExpressionNode:
-    def __init__(self, left, operator, right):
-        self.left = left
-        self.operator = operator
-        self.right = right
-
-    def __str__(self, level=0):
-        result = "  " * level + "MATRIX_MULT_ASSIGNMENT\n"
-        result += "  " * (level + 1) + "IDENTIFIER({})\n".format(self.left.value)
-        result += "  " * (level + 1) + "OP_MUL({})\n".format(self.operator)
-        result += "  " * (level + 1) + "IDENTIFIER({})\n".format(self.right.value)
-        return result
-
-
-# here is our parser class 
 class Parser:
     def __init__(self, tokens):
         self.tokens = tokens
-        self.current = 0
+        self.current_token = 0
 
-    def peek(self, offset=0):
-        # implements lookahead
-        pos = self.current + offset
-        return self.tokens[pos] if pos < len(self.tokens) else None
+    def parse(self):
+        return self.program()
 
-    def advance(self):
-        self.current += 1
+    def program(self):
+        # program -> statements
+        node = Node("PROGRAM")
+        statements_node = self.statements()
+        if statements_node:
+            node.add_child(statements_node)
+        return node
 
-    def match(self, expected_type):
-        if self.peek() and self.peek().type == expected_type:
-            token = self.peek()
-            self.advance()
-            return token
-        else:
-            raise SyntaxError("Expected {}, found {}".format(expected_type, self.peek().type if self.peek() else 'EOF'))
+    def statements(self):
+        # statements -> statement statements | ε
+        node = Node("STATEMENTS")
+        while self.current_token < len(self.tokens) and self.tokens[self.current_token][0] != "EOF":
+            statement_node = self.statement()
+            if statement_node:
+                node.add_child(statement_node)
+        return node
 
-    def parseProgram(self):
-        statements = []
-        while self.peek() is not None:
-            statements.append(self.parseStatement())
-        return ProgramNode(statements)
+    def statement(self):
+        # statement -> matrix_assignment | matrix_mult_assignment | display_statement
+        token_type, token_value = self.tokens[self.current_token]
+        
+        if token_type == "ID" and self.look_ahead(1)[0] == "ASSIGN":
+            return self.matrix_assignment()
+        elif token_type == "DISPLAY":
+            return self.display_statement()
+        elif token_type == "ID" and self.look_ahead(1)[0] == "MULT":
+            return self.matrix_mult_assignment()
+        return None
 
-    def parseStatement(self):
-        if self.peek().type == 'ID' and self.peek(1).type == 'ASSIGN':
-            return self.parseAssignment()
-        elif self.peek().type == 'DISPLAY':
-            return self.parseDisplayStatement()
-        else:
-            raise SyntaxError("Unexpected token in statement")
+    def matrix_assignment(self):
+        # matrix_assignment -> id = matrix
+        node = Node("MATRIX_ASSIGNMENT")
+        id_node = Node("ID", self.tokens[self.current_token][1])
+        node.add_child(id_node)
+        self.current_token += 2  
+        
+        matrix_node = self.matrix()
+        if matrix_node:
+            node.add_child(matrix_node)
+        return node
 
-    def parseAssignment(self):
-        identifier = self.match('ID')
-        self.match('ASSIGN')
-        if self.peek().type == 'MATRIX':
-            return AssignmentNode(identifier, self.parseMatrixList())
-        elif self.peek().type == 'ID' and self.peek(1).type == 'OP_MUL':
-            return AssignmentNode(identifier, self.parseExpression())
-        else:
-            raise SyntaxError("Expected matrix or expression after assignment")
+    def matrix(self):
+        # Matrix -> matrix_row
+        node = Node("MATRIX")
+        row_node = self.matrix_row()
+        if row_node:
+            node.add_child(row_node)
+        return node
 
-    def parseMatrixList(self):
-        rows = []
-        while self.peek().type == 'MATRIX':
-            rows.append(self.match('MATRIX').value)
-        return MatrixNode(rows)
+    def matrix_row(self):
+        # Matrix_row -> (number, number) matrix_row | ε
+        node = Node("MATRIX_ROW")
+        while self.current_token < len(self.tokens) and self.tokens[self.current_token][0] == "LPAREN":
+            self.current_token += 1  # Skip LPAREN
+            number1 = self.tokens[self.current_token][1]
+            self.current_token += 1  # Skip first number
+            self.current_token += 1  # Skip COMMA
+            number2 = self.tokens[self.current_token][1]
+            self.current_token += 1  # Skip second number
+            row_node = Node("ROW", (number1, number2))
+            node.add_child(row_node)
+            self.current_token += 1  # Skip RPAREN
+        return node
 
-    def parseExpression(self):
-        left = self.match('ID')
-        self.match('OP_MUL')
-        right = self.match('ID')
-        return ExpressionNode(left, 'x', right)
+    def matrix_mult_assignment(self):
+        # matrix_mult_assignment -> id = id x id
+        node = Node("MATRIX_MULT_ASSIGNMENT")
+        id1_node = Node("ID", self.tokens[self.current_token][1])
+        node.add_child(id1_node)
+        self.current_token += 2  # Skip ID and ASSIGN
 
-    def parseDisplayStatement(self):
-        self.match('DISPLAY')
-        identifier = self.match('ID')
-        return DisplayNode(identifier)
+        id2_node = Node("ID", self.tokens[self.current_token][1])
+        node.add_child(id2_node)
+        self.current_token += 2  # Skip first ID and MULT
+
+        id3_node = Node("ID", self.tokens[self.current_token][1])
+        node.add_child(id3_node)
+        self.current_token += 1  # Skip second ID
+        return node
+
+    def display_statement(self):
+        # display_statement -> display id
+        node = Node("DISPLAY_STATEMENT")
+        self.current_token += 1  # Skip DISPLAY
+        id_node = Node("ID", self.tokens[self.current_token][1])
+        node.add_child(id_node)
+        self.current_token += 1  # Skip ID
+        return node
+
+    def look_ahead(self, n):
+        if self.current_token + n < len(self.tokens):
+            return self.tokens[self.current_token + n]
+        return None
+
+    def parse_tokens(self, tokens):
+        self.tokens = tokens
+        self.current_token = 0
+        ast = self.parse()
+        return ast
 
 
-# Example usages 
+# Example usage with tokens (to be generated from scanner output), if needed 
+
+
 tokens = [
-    Token('ID', 'A'), Token('ASSIGN', '='), Token('MATRIX', '(1,2)'), Token('MATRIX', '(3,4)'),
-    Token('ID', 'B'), Token('ASSIGN', '='), Token('MATRIX', '(5,6)'), Token('MATRIX', '(7,8)'),
-    Token('ID', 'C'), Token('ASSIGN', '='), Token('ID', 'A'), Token('OP_MUL', 'x'), Token('ID', 'B'),
-    Token('DISPLAY', 'display'), Token('ID', 'C')
+    ("ID", "A"), ("ASSIGN", "="), ("LPAREN", "("), ("NUMBER", "1"), ("COMMA", ","), ("NUMBER", "2"), ("RPAREN", ")"),
+    ("ID", "B"), ("ASSIGN", "="), ("LPAREN", "("), ("NUMBER", "3"), ("COMMA", ","), ("NUMBER", "4"), ("RPAREN", ")"),
+    ("ID", "C"), ("ASSIGN", "="), ("ID", "A"), ("MULT", "x"), ("ID", "B"),
+    ("DISPLAY", "display"), ("ID", "C"), ("EOF", None)
 ]
 
 parser = Parser(tokens)
-try:
-    ast = parser.parseProgram()
-    print(ast)
-except SyntaxError as e:
-    print("Syntax error:", e)
+ast = parser.parse_tokens(tokens)
+print(ast)
