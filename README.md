@@ -59,6 +59,120 @@
 
 ### Sample Input Programs
 
+1. 
+Input Program (just assignment statements):  
+A = (1,2)
+    (3,4)
+B = (5,6)
+    (7,8)
+C = A x B
+
+
+Expected AST: 
+'PROGRAM'
+    'STATEMENTS'
+        'MATRIX_ASSIGNMENT'
+            'ID' (A)
+            'MATRIX'
+                'MATRIX_ROW' ('1', '2')
+                'MATRIX_ROW' ('3', '4')
+        'MATRIX_ASSIGNMENT'
+            'ID' (B)
+            'MATRIX'
+                'MATRIX_ROW' ('5', '6')
+                'MATRIX_ROW' ('7', '8')
+        'MATRIX_MULT_ASSIGNMENT'
+            'ID' (A)
+            'ID' (B)
+            'ID' (C)
+
+
+2. 
+Input Program (multiple matrix assignments, matrix multiplication assignment): 
+A = (2,3)
+    (4,5)
+B = (1,1)
+C = A x B
+D = (3,3)
+display D
+
+Expected AST:
+'PROGRAM'
+    'STATEMENTS'
+        'MATRIX_ASSIGNMENT'
+            'ID' (A)
+            'MATRIX'
+                'MATRIX_ROW' ('2', '3')
+                'MATRIX_ROW' ('4', '5')
+        'MATRIX_ASSIGNMENT'
+            'ID' (B)
+            'MATRIX'
+                'MATRIX_ROW' ('1', '1')
+        'MATRIX_MULT_ASSIGNMENT'
+            'ID' (A)
+            'ID' (B)
+            'ID' (C)
+        'MATRIX_ASSIGNMENT'
+            'ID' (D)
+            'MATRIX'
+                'MATRIX_ROW' ('3', '3')
+        'DISPLAY_STATEMENT'
+            'ID' (D)
+
+
+3. 
+
+Input Program (Error- Missing Assignment Operator): 
+A (1,2)
+    (3,4)
+B = (5,6)
+    (7,8)
+C = A x B
+display C
+
+ERROR: SyntaxError: Expected '=' after 'A' in MATRIX_ASSIGNMENT
+
+4. 
+
+Input Program (missing matrix multiplication operator x): 
+A = (1,2)
+    (3,4)
+B = (5,6)
+    (7,8)
+C = A B
+display C
+
+ERROR: SyntaxError: Expected 'x' operator for matrix multiplication between 'A' and 'B'
+
+
+5. 
+Input Program (display statements only): 
+A = (1,0)
+B = (2,2)
+C = A x B
+display A
+display C
+
+Expected AST:
+'PROGRAM'
+    'STATEMENTS'
+        'MATRIX_ASSIGNMENT'
+            'ID' (A)
+            'MATRIX'
+                'MATRIX_ROW' ('1', '0')
+        'MATRIX_ASSIGNMENT'
+            'ID' (B)
+            'MATRIX'
+                'MATRIX_ROW' ('2', '2')
+        'MATRIX_MULT_ASSIGNMENT'
+            'ID' (A)
+            'ID' (B)
+            'ID' (C)
+        'DISPLAY_STATEMENT'
+            'ID' (A)
+        'DISPLAY_STATEMENT'
+            'ID' (C)
+
 
 ### How to Run
 
@@ -69,8 +183,8 @@
 2. Run python3 parser_1.py
 
 
-### Demo Video Link & Description
-
+### Demo Video Link 
+https://drive.google.com/drive/folders/1PHJg_KoF7VO697X8WO1n-cj4m4KZrQ40?usp=sharing
 
 
 

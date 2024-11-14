@@ -97,10 +97,10 @@ class Parser:
             self.current_token += 1  # Skip first number
             self.current_token += 1  # Skip COMMA
             number2 = self.tokens[self.current_token][1]
-            self.current_token += 1  # Skip second number
+            self.current_token += 1  
             row_node = Node("ROW", (number1, number2))
             node.add_child(row_node)
-            self.current_token += 1  # Skip RPAREN
+            self.current_token += 1  
         return node
 
     def matrix_mult_assignment(self):
@@ -125,7 +125,7 @@ class Parser:
         self.current_token += 1  # Skip DISPLAY
         id_node = Node("ID", self.tokens[self.current_token][1])
         node.add_child(id_node)
-        self.current_token += 1  # Skip ID
+        self.current_token += 1  
         return node
 
     def look_ahead(self, n):
@@ -141,8 +141,6 @@ class Parser:
 
 
 # Example usage with tokens (to be generated from scanner output), if needed 
-
-
 tokens = [
     ("ID", "A"), ("ASSIGN", "="), ("LPAREN", "("), ("NUMBER", "1"), ("COMMA", ","), ("NUMBER", "2"), ("RPAREN", ")"),
     ("ID", "B"), ("ASSIGN", "="), ("LPAREN", "("), ("NUMBER", "3"), ("COMMA", ","), ("NUMBER", "4"), ("RPAREN", ")"),
