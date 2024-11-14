@@ -1,5 +1,5 @@
 # Programming Assignment 2 - Parser for Matrix Language
-## Partners: Amanda Jenkins (alj2155) & Mike Yang (ty2467) 
+## Partner: Amanda Jenkins (alj2155) - updated group as suggested by TAs
 
 ## Context-Free Grammar Defined 
 
