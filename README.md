@@ -178,8 +178,9 @@ Expected AST:
 
 1. Run the Scanner: Use the run_scanner.sh script to generate tokens for the sample code in example.txt. 
 - chmod +x run_scanner.sh
-- ./run_scanner.sh example.txt > tokens.txt
-  - I will be redirecting the scanner’s output (tokens) to a file named tokens.txt
+- ./run_scanner.sh example.txt > tokens.txt 
+  - Our program redirects the scanner’s output (tokens) to a file named tokens.txt
+  - Edit example.txt with a sample input program 
 2. Run python3 parser_1.py
 
 
